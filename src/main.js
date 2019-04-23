@@ -1,5 +1,9 @@
 import * as PIXI from 'pixi.js'
 
+const Keyboard = require('pixi.js-keyboard');
+const Mouse = require('pixi.js-mouse');
+
+
 let Application = PIXI.Application,
     loader = PIXI.loader,
     resources = PIXI.loader.resources,
@@ -7,7 +11,7 @@ let Application = PIXI.Application,
     TextureCache = PIXI.utils.TextureCache,
     Rectangle = PIXI.Rectangle;
 
-let cat;
+var cat, state;
 
 //Create a Pixi Application
 let app = new Application({
@@ -28,6 +32,29 @@ loader
     .add('tile', 'assets/tilesets.png')
     .on("progress", loadProgressHandler)
     .load(setup);
+
+
+
+
+    function getAngleTo(mx, my, px, py) {
+        var self = this;
+        var distX = my - py;
+        var distY = mx - px;
+        var angle = Math.atan2(distX, distY);
+        //var degrees = angle * 180/ Math.PI;
+        return angle;
+      }
+       
+      function getAngleX(length, angle) {
+          return Math.cos(angle) * length;
+      }
+       
+      function getAngleY(length, angle) {
+          return Math.sin(angle) * length;
+      }
+
+
+
 
 function setup() {
 
@@ -50,20 +77,32 @@ function setup() {
     cat.scale.set(0.1, 0.1);
     //Add the cat to the stage
 
+    
 
     app.stage.addChild(cat);
 
     app.stage.addChild(rocket);
     app.renderer.render(app.stage);
 
+    state = play;
+
     app.ticker.add(delta => gameLoop(delta));
+
+    Mouse.events.on('released', null, (buttonCode, event, mouseX, mouseY, mouseOriginX, mouseOriginY, mouseMoveX, mouseMoveY) => {
+        console.log(buttonCode, mouseOriginX, mouseOriginY, mouseX, mouseY, mouseMoveX, mouseMoveY);
+      });
+
+
 }
 
 function gameLoop(delta){
-
-    //Move the cat 1 pixel 
-    cat.x += 1;
+    //Update the current game state:
+    state(delta);
+   
+    Keyboard.update();
+    Mouse.update();
   }
+
 
 function loadProgressHandler(loader, resource) {
 
@@ -76,4 +115,31 @@ function loadProgressHandler(loader, resource) {
     //If you gave your files names as the first argument 
     //of the `add` method, you can access them like this
     //console.log("loading: " + resource.name);
+}
+
+function play(delta) {
+    const speed = 5 * delta;
+    
+    // Keyboard
+    if (Keyboard.isKeyDown('ArrowLeft', 'KeyA'))
+      cat.x -= speed;
+    if (Keyboard.isKeyDown('ArrowRight', 'KeyD'))
+      cat.x += speed;
+    
+    if (Keyboard.isKeyDown('ArrowUp', 'KeyW'))
+      cat.y -= speed;
+    if (Keyboard.isKeyDown('ArrowDown', 'KeyS'))
+      cat.y += speed;
+    
+    // Mouse
+    cat.rotation = getAngleTo(Mouse.getPosX(), Mouse.getPosY(), cat.x, cat.y);
+    
+    if (Mouse.isButtonDown(Mouse.Button.LEFT)) {
+      cat.x += getAngleX(speed, cat.rotation);
+      cat.y += getAngleY(speed, cat.rotation);
+    }
+    if (Mouse.isButtonDown(Mouse.Button.RIGHT)) {
+      cat.x -= getAngleX(speed, cat.rotation);
+      cat.y -= getAngleY(speed, cat.rotation);
+    }
 }

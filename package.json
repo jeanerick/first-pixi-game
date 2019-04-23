@@ -23,6 +23,8 @@
     "webpack-dev-server": "^3.3.1"
   },
   "dependencies": {
-    "pixi.js": "^4.8.7"
+    "pixi.js": "^4.8.7",
+    "pixi.js-keyboard": "^1.0.9",
+    "pixi.js-mouse": "^1.0.4"
   }
 }
